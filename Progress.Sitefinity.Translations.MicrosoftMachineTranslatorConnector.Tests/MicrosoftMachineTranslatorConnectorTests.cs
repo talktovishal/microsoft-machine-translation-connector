@@ -16,7 +16,12 @@ namespace Progress.Sitefinity.Translations.MicrosoftMachineTranslatorConnector.T
         private MockedTranslationOptions options;
         private const string SuccessfulTranslationResponseTemplate = "[{{\"translations\" : [{{\"text\":\"{0}\"}}]}}]";
         private readonly string GenericTranslatedText = "translated_text";
+
+        private const string SuccessfulBreakSentenceTemplate = "[{{\"sentLen\": [{0}]}}]";
+        private readonly string GenericBreakSentenceLengths = $"{2 * MicrosoftMachineTranslatorConnector.MaxTranslateRequestSize - 1}";
+
         private string GenericSuccessfulTranslationResponse => string.Format(SuccessfulTranslationResponseTemplate, GenericTranslatedText);
+        private string GenericBreakSentenceResponse => string.Format(SuccessfulBreakSentenceTemplate, GenericBreakSentenceLengths);
 
         [TestInitialize]
         public void TestInit()
@@ -131,6 +136,35 @@ namespace Progress.Sitefinity.Translations.MicrosoftMachineTranslatorConnector.T
             // assert
             Assert.AreEqual(GenericTranslatedText, result[0]);
         }
+
+
+
+
+        [TestMethod]
+        public void Translate_SuccessfulTransaltionsVLargeRequestRequest_ReturnsCollectionWithTranslation()
+        {
+            // arrange
+            this.sut.mockedHttpClientSendAsyncDelegate = x => new HttpResponseMessage()
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+                Content = new StringContent(GenericSuccessfulTranslationResponse)
+            };
+            int textLength = MicrosoftMachineTranslatorConnector.MaxTranslateRequestSize * 2;
+            this.sut.mockedBreakSentenceHttpClientSendAsyncDelegate = x => new HttpResponseMessage()
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+                Content = new StringContent(string.Format(SuccessfulBreakSentenceTemplate, textLength - 1))
+            };
+
+            // act
+            var result = this.sut.TranslateCallMock(new List<string>() { new String('L', textLength) }, this.options);
+
+            // assert
+            Assert.AreEqual(GenericTranslatedText, result[0]);
+        }
+
+
+
 
         [TestMethod]
         [ExpectedException(typeof(MicrosoftTranslatorConnectorException), "Expected unsuccessful translation request to throw.")]

@@ -11,6 +11,8 @@ namespace Progress.Sitefinity.Translations.MicrosoftMachineTranslatorConnector.T
     internal class TestableMicrosoftMachineTranslatorConnector : MicrosoftMachineTranslatorConnector
     {
         public Func<HttpRequestMessage, HttpResponseMessage> mockedHttpClientSendAsyncDelegate { get; set; }
+        public Func<HttpRequestMessage, HttpResponseMessage> mockedBreakSentenceHttpClientSendAsyncDelegate { get; set; }
+
         public bool MockedIsRemoveHtmlTagsEnabled { get; set; }
 
         public void InitializeCallMock(NameValueCollection config)
@@ -27,6 +29,12 @@ namespace Progress.Sitefinity.Translations.MicrosoftMachineTranslatorConnector.T
         {
             return new HttpClient(new MockedMessageHandler(this.mockedHttpClientSendAsyncDelegate));
         }
+
+        protected override HttpClient GetBreakSentenceClient()
+        {
+            return new HttpClient(new MockedMessageHandler(this.mockedBreakSentenceHttpClientSendAsyncDelegate));
+        }
+
 
         protected override bool IsRemoveHtmlTagsEnabled()
         {
